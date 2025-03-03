@@ -17,6 +17,9 @@ struct MainView: View {
                 NavigationLink(destination: SettingsUIView()) {
                     Image(systemName: "gearshape.fill")
                 }
+                NavigationLink(destination: DBTestView()) {
+                    Image(systemName: "heart.fill")
+                }
             }
         }
         

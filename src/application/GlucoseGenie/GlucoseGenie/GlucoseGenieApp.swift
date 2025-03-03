@@ -8,6 +8,7 @@
 import SwiftUI
 import Amplify
 import AWSCognitoAuthPlugin
+import AWSAPIPlugin
 
 @main
 struct GlucoseGenieApp: App {
@@ -24,6 +25,7 @@ struct GlucoseGenieApp: App {
     private func configureAmplify() {
         do {
             try Amplify.add(plugin: AWSCognitoAuthPlugin())
+            try Amplify.add(plugin: AWSAPIPlugin(modelRegistration: AmplifyModels()))
             try Amplify.configure()
             print("Amplify sucessfully configured")
         } catch {
