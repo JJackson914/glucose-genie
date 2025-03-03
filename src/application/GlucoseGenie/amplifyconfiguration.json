@@ -4,12 +4,11 @@
     "api": {
         "plugins": {
             "awsAPIPlugin": {
-                "glucosegenie": {
+                "glucosegenieAPI": {
                     "endpointType": "GraphQL",
-                    "endpoint": "https://k23zp3smene4dogwzvulhnegee.appsync-api.us-east-1.amazonaws.com/graphql",
+                    "endpoint": "https://aeuklksfena2nis3gbkca76kji.appsync-api.us-east-1.amazonaws.com/graphql",
                     "region": "us-east-1",
-                    "authorizationType": "API_KEY",
-                    "apiKey": "da2-556bfcyw5zfmrf2m2m7fzylkma"
+                    "authorizationType": "AMAZON_COGNITO_USER_POOLS"
                 }
             }
         }
@@ -73,11 +72,10 @@
                 },
                 "AppSync": {
                     "Default": {
-                        "ApiUrl": "https://k23zp3smene4dogwzvulhnegee.appsync-api.us-east-1.amazonaws.com/graphql",
+                        "ApiUrl": "https://aeuklksfena2nis3gbkca76kji.appsync-api.us-east-1.amazonaws.com/graphql",
                         "Region": "us-east-1",
-                        "AuthMode": "API_KEY",
-                        "ApiKey": "da2-556bfcyw5zfmrf2m2m7fzylkma",
-                        "ClientDatabasePrefix": "glucosegenie_API_KEY"
+                        "AuthMode": "AMAZON_COGNITO_USER_POOLS",
+                        "ClientDatabasePrefix": "glucosegenieAPI_AMAZON_COGNITO_USER_POOLS"
                     }
                 }
             }

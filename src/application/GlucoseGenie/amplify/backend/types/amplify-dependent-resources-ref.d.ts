@@ -1,9 +1,8 @@
 export type AmplifyDependentResourcesAttributes = {
   "api": {
-    "glucosegenie": {
+    "glucosegenieAPI": {
       "GraphQLAPIEndpointOutput": "string",
-      "GraphQLAPIIdOutput": "string",
-      "GraphQLAPIKeyOutput": "string"
+      "GraphQLAPIIdOutput": "string"
     }
   },
   "auth": {

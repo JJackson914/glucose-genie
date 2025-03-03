@@ -1,5 +1,5 @@
 projects:
-  glucosegenie:
+  glucosegenieAPI:
     schemaPath: graphql/schema.json
     includes:
       - graphql/**/*.graphql
@@ -10,3 +10,6 @@ projects:
         codeGenTarget: swift
         generatedFileName: API.swift
         docsFilePath: graphql
+extensions:
+  amplify:
+    version: 3
