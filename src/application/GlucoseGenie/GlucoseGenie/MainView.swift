@@ -8,6 +8,7 @@ import SwiftUI
 
 struct MainView: View {
     @EnvironmentObject private var authenticationService: AuthenticationService
+    @StateObject private var mealPlan = MealPlan()
     
     var body: some View {
         NavigationStack {
@@ -24,10 +25,10 @@ struct MainView: View {
                         NavigationLink(destination: SavedRecipesView()) {
                             Text("Saved Recipes").styledButton()
                         }
-                        NavigationLink(destination: WeeklyMealPlanView()) {
+                        NavigationLink(destination: WeeklyMealPlanView().environmentObject(mealPlan)) {
                             Text("Weekly Meal Plan").styledButton()
                         }
-                        NavigationLink(destination: GroceryListView()) {
+                        NavigationLink(destination: GroceryListView().environmentObject(mealPlan)) {
                             Text("Grocery List").styledButton()
                         }
                         NavigationLink(destination: GroceryStoreView()) {

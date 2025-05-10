@@ -7,56 +7,77 @@
 
 import SwiftUI
 
-// Hard-coded ingredients
-let testRecipe = Recipe(
-    name: "Recipe Name",
-    image: "https://diabetesfoodhub.org/sites/foodhub/files/styles/375_375_2x/public/shutterstock_425424460.webp?h=e2d4e250&itok=ptCQ_FGY",
-    url: "https://example.com/recipe",
-    ingredients: [
-        Ingredient(text: "1 egg", quantity: 1, units: "unit"),
-        Ingredient(text: "100g flour", quantity: 100, units: "g"),
-        Ingredient(text: "2cups milk", quantity: 2, units: "cups"),
-        Ingredient(text: "1.5tbsp olive oil", quantity: 1.5, units: "tbsp"),
-        Ingredient(text: "200g chicken breast", quantity: 200, units: "g"),
-        Ingredient(text: "3cloves garlic", quantity: 3, units: "cloves"),
-        Ingredient(text: "1tsp salt", quantity: 1, units: "tsp"),
-        Ingredient(text: "0.5cup chopped onions", quantity: 0.5, units: "cup"),
-        Ingredient(text: "250ml vegetable broth", quantity: 250, units: "ml"),
-        Ingredient(text: "1slice whole wheat bread", quantity: 1, units: "slice"),
-        Ingredient(text: "100g spinach", quantity: 100, units: "g"),
-        Ingredient(text: "2tbsp soy sauce", quantity: 2, units: "tbsp")
-    ],
-    totalNutrients: [
-        Nutrient(name: "Energy", quantity: 250, unit: "kcal"),
-        Nutrient(name: "Carbohydrates", quantity: 30, unit: "g"),
-        Nutrient(name: "Sugars", quantity: 5, unit: "g")
-    ],
-    diets: [.balanced, .lowFat],
-    mealtypes: [.breakfast],
-    healthLabels: [.glutenFree, .vegetarian],
-    tags: ["dairy", "vegatable"]
-)
+class GroceryList: ObservableObject {
+    @Published var items: [GroceryItem] = [] {
+        didSet {
+            saveItems()
+        }
+    }
 
-struct GroceryItem: Identifiable {
-    let id = UUID()
-    let quantity: String
-    let name: String
-    var isChecked: Bool = false
-}
+    private let storageKey = "groceryListData"
 
-func parseIngredients(_ ingredients: [Ingredient]) -> [GroceryItem] {
-    ingredients.map { ingredient in
-        let parts = ingredient.text.split(separator: " ", maxSplits: 1).map(String.init)
-        let quantity = parts.first ?? ""
-        let name = parts.count > 1 ? parts[1] : ""
-        return GroceryItem(quantity: quantity, name: name.capitalized)
+    init() {
+        loadItems()
+    }
+
+    private func saveItems() {
+        let encoder = JSONEncoder()
+        if let data = try? encoder.encode(items) {
+            UserDefaults.standard.set(data, forKey: storageKey)
+            // print("Grocery list saved")
+        }
+    }
+
+    private func loadItems() {
+        let decoder = JSONDecoder()
+        if let data = UserDefaults.standard.data(forKey: storageKey),
+           let decoded = try? decoder.decode([GroceryItem].self, from: data) {
+            self.items = decoded
+            // print("Grocery list loaded")
+        }
+    }
+    
+    func addItem(_ item: GroceryItem) {
+        items.append(item)
+        objectWillChange.send()
+    }
+    
+    func removeItem(_ item: GroceryItem) {
+        if let index = items.firstIndex(where: { $0.id == item.id }) {
+            items.remove(at: index)
+            objectWillChange.send()
+        }
+    }
+    
+    func syncList(with mealPlan: MealPlan) {
+        DispatchQueue.main.async {
+            self.items = parseMealPlan(from: mealPlan.mealsByDay)
+        }
+    }
+    
+    func replaceAll(with newItems: [GroceryItem]) {
+        items = newItems
     }
 }
 
+struct GroceryItem: Identifiable, Codable {
+    let id = UUID()
+    let item: String
+    var isChecked: Bool = false
+}
+
+func parseMealPlan(from mealsByDay: [Date: [String: Recipe]]) -> [GroceryItem] {
+    mealsByDay.values
+        .flatMap { $0.values } // Flatten to [String: Recipe]
+        .flatMap { $0.ingredients } // Flatten to Ingredient
+        .map { GroceryItem(item: $0.text) } // Extract ingredient text
+}
 
 struct GroceryListView: View {
-    @State private var groceryItems: [GroceryItem] = parseIngredients(testRecipe.ingredients)
+    @EnvironmentObject var mealPlan: MealPlan
+    @StateObject private var groceryList = GroceryList()
     @State private var syncConfirmation = false
+    @State private var shouldSyncList = false
     
     var body: some View {
         NavigationView {
@@ -69,7 +90,7 @@ struct GroceryListView: View {
 
                 ScrollView {
                     VStack(spacing: 12) {
-                        ForEach($groceryItems) { $item in
+                        ForEach($groceryList.items) { $item in
                             HStack {
                                 Button(action: {
                                     item.isChecked.toggle()
@@ -78,15 +99,8 @@ struct GroceryListView: View {
                                         .foregroundColor(item.isChecked ? .green : .gray)
                                         .font(.title3)
                                 }
-
-                                Text(item.quantity)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .frame(width: 80, alignment: .center)
-                                    .strikethrough(item.isChecked, color: .gray)
-                                    .foregroundColor(item.isChecked ? .gray : .primary)
-
-                                Text(item.name)
+                                
+                                Text(item.item)
                                     .font(.body)
                                     .fontWeight(.medium)
                                     .strikethrough(item.isChecked, color: .gray)
@@ -95,9 +109,7 @@ struct GroceryListView: View {
                                 Spacer()
                                 
                                 Button(action: {
-                                    if let index = groceryItems.firstIndex(where: { $0.id == item.id }) {
-                                        groceryItems.remove(at: index)
-                                    }
+                                    groceryList.removeItem(item)
                                 }) {
                                     Image(systemName: "xmark.circle")
                                         .foregroundColor(.red)
@@ -127,12 +139,23 @@ struct GroceryListView: View {
             .alert("Sync Grocery List?", isPresented: $syncConfirmation) {
                 Button("Cancel", role: .cancel) { }
                 Button("Sync") {
-                    groceryItems = parseIngredients(testRecipe.ingredients)
+                    shouldSyncList = true
                 }
             } message: {
                 Text("This will sync your grocery list with your current meal plan. Any changes will be lost.")
             }
+            .onChange(of: shouldSyncList) {
+                if shouldSyncList {
+                    groceryList.syncList(with: mealPlan)
+                    shouldSyncList = false
+                }
+            }
         }
+//        .onAppear {
+//            DispatchQueue.main.async {
+//                let ingredients = parseMealPlan(from: mealPlan.mealsByDay)
+//            }
+//        }
     }
 }
 

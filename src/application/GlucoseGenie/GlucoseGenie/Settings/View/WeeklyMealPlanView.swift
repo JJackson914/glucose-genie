@@ -106,7 +106,8 @@ struct WeeklyMealPlanView: View {
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
     }
     
-    @StateObject private var mealPlan = MealPlan()
+    //@StateObject private var mealPlan = MealPlan()
+    @EnvironmentObject var mealPlan: MealPlan
     @State private var clearConfirmation = false
 
     var body: some View {
